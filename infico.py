@@ -4,9 +4,10 @@ import paramiko
 class InfinCo:
     """ Collaborative version of Infinio w/ parallelism embeded
     """
-    partners = []  
-    ssh_clnts = []  
+    partners = []
+    ssh_clnts = []
     def __init__(self, partner_info={}, num_job=1):
+        self.num_job = num_job
         for pn, pc in partner_info.iterms():
             pu, pp = pc.split(' ')
             self.partners.append[(pn, pu, pp )]
