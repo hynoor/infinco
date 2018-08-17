@@ -17,6 +17,7 @@ class Client:
         self.password = password
         self.ip = ip
         self.jobs = []
+        self.running = []
         self.client = paramiko.SSHClient()
         self.client.load_system_host_keys()
         self.client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
@@ -32,13 +33,38 @@ class Client:
     def run(self, command):
         """ execute given command sychronizely 
         """
-        return
+        job = self.client.get_transport.open_session()
+        job.exec_command(command)
+        msg = job.recv()
+        rc = job.recv_exit_status() # wait till job exit
+        if rc == -1:
+            raise Exception("Remotely process failed: %s" % msg)
 
     def run_async(self, command):
         """ execute given command asychronizely 
         """
-        return
-    
+        job = self.client.get_transport.open_session()
+        job.exec_command(command)
+        self.jobs.append(job)
+
+        return self.job
+
+    def poll(self):
+        """ poll the status of the async job(s), respond with the output
+        """
+        stdout = []
+        all_ready = True
+        for j in self.jobs:
+            if j.recv_exit_status()
+                pass
+            else j.recv_ready():
+                all_ready = False
+                stdout.append(j.recv(1024))
+        return stdout 
+
+    @property
+    def running(self):
+        return self.running
 
 class Commander:
     """ Collaborative version of Infinio w/ parallelism embeded
