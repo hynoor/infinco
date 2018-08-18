@@ -5,8 +5,8 @@ import random
 
 def test():
     pid = os.getpid()
-    for i in range(10):
-        dur = random.randint(1,10)
+    for i in range(3):
+        dur = random.randint(1, 10)
         print("{}: Sleeping for {} seconds".format(pid, dur))
         time.sleep(dur)
 

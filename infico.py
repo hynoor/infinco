@@ -10,6 +10,7 @@ class Client:
     """ client host
     """
     port = 22
+
     def __init__(self, ip=None, user='root', password='Password123!'):
         """ initialize client host
         """
@@ -29,41 +30,57 @@ class Client:
         sftp.put(target, '/tmp/' + os.path.basename(target))
         sftp.close()
     
-    def run(self, command):
-        """ execute given command sychronizely 
-        """
-        job = self.client.get_transport().open_session()
-        job.exec_command(command)
-        msg = job.recv()
-        rc = job.recv_exit_status() # wait till job exit
-        if rc == -1:
-            raise Exception("Remotely process failed: %s" % msg)
-
     def run_async(self, command):
-        """ execute given command asychronizely 
+        """ execute given command asynchronously
         """
-        job = self.client.get_transport().open_session()
-        job.exec_command(command)
+        job = Job(channel=self.client.get_transport().open_session(),
+                  command=command)
         self.jobs.append(job)
+        return job
 
-    def poll(self):
-        """ poll the status of the async job(s), respond with the output
+    def wait(self, timeout=5):
+        """ wait for remote command complete
         """
-        stdout = []
-        all_ready = True
-        running = self.jobs[:]
-        for j in running:
-            if j.recv_exit_status():
-                self.jobs.remove(j)
-                pass
-            elif j.recv_ready():
-                all_ready = False
-                stdout.append(j.recv(1024))
-        return stdout 
+        for job in self.jobs:
+            job.stdin.close()
 
     @property
     def jobs(self):
         return self.jobs
+
+
+class Job:
+    """
+    Job/task executing on client
+    """
+    __slots__ = [
+        'channel',
+        'status',
+        'command'
+    ]
+
+    def __init__(self, channel=None):
+        """
+        Initialize
+        """
+        self.channel = channel
+        self.stdin, self.stdout, self.stderr = self.channel.exec_command()
+        self.stdin.close()
+        self.channel.shutdown_write()
+
+    @property
+    def status(self):
+        """
+        job status: active | running | completed
+        """
+        return self.status
+
+
+
+
+
+
+
 
 class Commander:
     """ Collaborative version of Infinio w/ parallelism embeded
